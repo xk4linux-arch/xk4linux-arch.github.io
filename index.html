@@ -5,212 +5,167 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>sk404lab - Security Research & CTF Writeups</title>
 <style>
-  :root {
-    --bg: #0d0d0d;
-    --surface: #141414;
-    --border: #222;
-    --accent: #ff6b2b;
-    --text: #e0e0e0;
-    --muted: #666;
-    --green: #39d353;
-    --code-bg: #1a1a1a;
-  }
-  :root.light {
-    --bg: #f5f5f5;
-    --surface: #fff;
-    --border: #ccc;
-    --accent: #e05a1f;
-    --text: #111;
-    --muted: #444;
-    --green: #1a7f37;
-    --code-bg: #eee;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    background: var(--bg);
-    color: var(--text);
+    background: #0d0d0d;
+    color: #e0e0e0;
     font-family: 'Courier New', Courier, monospace;
     font-size: 18px;
     line-height: 1.7;
-    min-height: 100vh;
+    margin: 0;
+    padding: 0;
   }
-  header {
-    border-bottom: 1px solid var(--border);
-    padding: 2rem 0 1.5rem;
+  body.light {
+    background: #f4f4f4;
+    color: #111;
   }
-  .container { max-width: 780px; margin: 0 auto; padding: 0 1.5rem; }
-  .site-title {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--accent);
-    text-decoration: none;
-    letter-spacing: -0.5px;
-  }
-  .site-title span { color: var(--text); }
-  .tagline {
-    color: var(--muted);
-    font-size: 0.95rem;
-    margin-top: 0.25rem;
-  }
-  nav { margin-top: 1rem; }
-  nav a {
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 1rem;
-    margin-right: 1.5rem;
-    transition: color 0.15s;
-  }
-  nav a:hover { color: var(--accent); }
-  .theme-toggle {
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 700px; margin: 0 auto; padding: 0 20px; }
+
+  /* HEADER */
+  header { border-bottom: 1px solid #222; padding: 24px 0 20px; }
+  body.light header { border-bottom-color: #ccc; }
+  .logo { font-size: 1.8rem; font-weight: 700; color: #ff6b2b; }
+  .logo span { color: #e0e0e0; }
+  body.light .logo span { color: #111; }
+  .tagline { color: #888; font-size: 0.9rem; margin-top: 4px; }
+  body.light .tagline { color: #555; }
+  .nav { margin-top: 16px; display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+  .nav a { color: #888; font-size: 1rem; }
+  body.light .nav a { color: #555; }
+  .nav a:hover { color: #ff6b2b; }
+  .toggle {
+    margin-left: auto;
     background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-size: 0.82rem;
-    padding: 0.2rem 0.6rem;
-    border-radius: 3px;
-    cursor: pointer;
+    border: 1px solid #333;
+    color: #888;
     font-family: inherit;
-    transition: border-color 0.15s, color 0.15s;
-    float: right;
-    margin-top: -0.1rem;
-  }
-  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
-  main { padding: 3rem 0; }
-  .section-label {
-    color: var(--muted);
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-  .section-label::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-  .post-card {
-    border: 1px solid var(--border);
+    font-size: 0.9rem;
+    padding: 4px 12px;
     border-radius: 4px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    background: var(--surface);
-    text-decoration: none;
-    display: block;
-    transition: border-color 0.15s;
+    cursor: pointer;
   }
-  .post-card:hover { border-color: var(--accent); }
-  .post-card.coming-soon { opacity: 0.6; cursor: default; }
-  .post-meta {
+  body.light .toggle { border-color: #ccc; color: #555; }
+  .toggle:hover { border-color: #ff6b2b; color: #ff6b2b; }
+
+  /* MAIN */
+  main { padding: 40px 0; }
+
+  /* ABOUT */
+  .about {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 6px;
+    padding: 24px;
+    margin-bottom: 40px;
+  }
+  body.light .about { background: #fff; border-color: #ddd; }
+  .about p { color: #bbb; font-size: 1rem; margin: 0 0 12px; }
+  body.light .about p { color: #333; }
+  .about p:last-child { margin: 0; }
+  .handle { color: #888; font-size: 0.9rem; }
+  body.light .handle { color: #555; }
+  .handle strong { color: #e0e0e0; }
+  body.light .handle strong { color: #111; }
+
+  /* SECTION */
+  .section-title {
+    color: #555;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.5rem;
-    flex-wrap: wrap;
+    gap: 12px;
   }
+  body.light .section-title { color: #888; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: #222; }
+  body.light .section-title::after { background: #ddd; }
+
+  /* POST CARD */
+  .card {
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 6px;
+    padding: 24px;
+    margin-bottom: 16px;
+    display: block;
+    text-decoration: none;
+  }
+  body.light .card { background: #fff; border-color: #ddd; }
+  .card:hover { border-color: #ff6b2b; }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
   .badge {
-    font-size: 0.78rem;
-    padding: 0.15rem 0.5rem;
-    border-radius: 3px;
+    font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 3px;
     letter-spacing: 0.5px;
   }
-  .badge-ctf { background: #1a1f35; color: #6b8cff; border: 1px solid #2a3060; }
-  .badge-intigriti { background: #1f1a1a; color: #ff6b2b; border: 1px solid #3a2a1a; }
-  .badge-p2 { background: #1a2a1a; color: var(--green); border: 1px solid #1a3a1a; }
-  .badge-soon { background: #1a1a1a; color: var(--muted); border: 1px solid #333; }
-  .post-date { color: var(--muted); font-size: 0.9rem; }
-  .post-title {
-    color: var(--text);
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: 0.4rem;
-    line-height: 1.3;
-  }
-  .post-summary { color: var(--text); opacity: 0.8; font-size: 0.95rem; }
-  .post-tags { margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .b-ctf { background: #1a1f35; color: #7b9cff; border: 1px solid #2a3060; }
+  .b-int { background: #2a1a0a; color: #ff6b2b; border: 1px solid #4a2a0a; }
+  .b-ok  { background: #0a2a0a; color: #39d353; border: 1px solid #0a3a0a; }
+  body.light .b-ctf { background: #e8eeff; color: #3a5cc7; border-color: #c0ccff; }
+  body.light .b-int { background: #fff0e8; color: #c04a10; border-color: #ffd0b0; }
+  body.light .b-ok  { background: #e8f8e8; color: #1a7f37; border-color: #b0e0b0; }
+  .card-date { color: #666; font-size: 0.85rem; margin-bottom: 8px; }
+  body.light .card-date { color: #888; }
+  .card-title { color: #e0e0e0; font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
+  body.light .card-title { color: #111; }
+  .card-desc { color: #999; font-size: 0.9rem; line-height: 1.5; }
+  body.light .card-desc { color: #444; }
+  .tags { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
   .tag {
     font-size: 0.8rem;
-    color: var(--muted);
-    background: var(--code-bg);
-    border: 1px solid var(--border);
-    padding: 0.1rem 0.45rem;
+    color: #666;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    padding: 2px 8px;
     border-radius: 3px;
   }
-  .about-box {
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 1.5rem;
-    background: var(--surface);
-    margin-bottom: 3rem;
-  }
-  .about-box p { color: var(--text); font-size: 1rem; }
-  .about-box a { color: var(--accent); text-decoration: none; }
-  .about-box a:hover { text-decoration: underline; }
-  .handles { display: flex; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap; }
-  .handle {
-    font-size: 0.78rem;
-    color: var(--muted);
-  }
-  .handle span { color: var(--text); }
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 1.5rem 0;
-    color: var(--muted);
-    font-size: 0.78rem;
-  }
-  .cursor {
-    display: inline-block;
-    width: 8px;
-    height: 1em;
-    background: var(--accent);
-    vertical-align: text-bottom;
-    animation: blink 1s step-end infinite;
-  }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  body.light .tag { color: #555; background: #eee; border-color: #ccc; }
+
+  /* FOOTER */
+  footer { border-top: 1px solid #222; padding: 20px 0; color: #555; font-size: 0.85rem; }
+  body.light footer { border-top-color: #ddd; color: #888; }
 </style>
 </head>
-<body>
+<body id="page">
 
 <header>
-  <div class="container">
-    <a href="/" class="site-title">sk404<span>lab</span><span class="cursor"></span></a>
+  <div class="wrap">
+    <a href="/" class="logo">sk404<span>lab</span></a>
     <div class="tagline">// security research &middot; bug bounty &middot; ctf writeups</div>
-    <nav>
+    <nav class="nav">
       <a href="/">home</a>
       <a href="#writeups">writeups</a>
       <a href="https://www.intigriti.com/profile/sk404" target="_blank" rel="noopener">intigriti</a>
-      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">☀ light</button>
+      <button class="toggle" id="themeBtn" onclick="toggleTheme()">☀ light</button>
     </nav>
   </div>
 </header>
 
 <main>
-  <div class="container">
+  <div class="wrap">
 
-    <div class="about-box">
+    <div class="about">
       <p>Security researcher focused on web application vulnerabilities, API security, and logic flaws. Active on bug bounty platforms hunting for real impact.</p>
-      <div class="handles">
-        <div class="handle">Intigriti: <span>sk404</span></div>
-      </div>
+      <p class="handle">Intigriti: <strong>sk404</strong></p>
     </div>
 
-    <div class="section-label">writeups</div>
+    <div class="section-title" id="writeups">writeups</div>
 
-    <a href="writeups/intigriti-ctf-1026.html" class="post-card">
-      <div class="post-meta">
-        <span class="badge badge-ctf">CTF</span>
-        <span class="badge badge-intigriti">Intigriti</span>
-        <span class="badge badge-p2">Accepted</span>
-        <span class="post-date">Oct 26, 2026</span>
+    <a href="writeups/intigriti-ctf-1026.html" class="card">
+      <div class="badges">
+        <span class="badge b-ctf">CTF</span>
+        <span class="badge b-int">Intigriti</span>
+        <span class="badge b-ok">Accepted</span>
       </div>
-      <div class="post-title">Intigriti CTF 1026 - Halloween Candy Store: Coupon Logic Bypass</div>
-      <div class="post-summary">How alternating coupon codes exploits a stateless deduplication check to stack unlimited discounts and get 100% off a €666 item with €66 credit.</div>
-      <div class="post-tags">
+      <div class="card-date">Oct 26, 2026</div>
+      <div class="card-title">Intigriti CTF 1026 - Halloween Candy Store: Coupon Logic Bypass</div>
+      <div class="card-desc">How alternating coupon codes exploits a stateless deduplication check to stack unlimited discounts and get 100% off a €666 item with €66 credit.</div>
+      <div class="tags">
         <span class="tag">business-logic</span>
         <span class="tag">coupon-bypass</span>
         <span class="tag">http-body-bleed</span>
@@ -222,19 +177,17 @@
 </main>
 
 <footer>
-  <div class="container">
-    sk404lab.com &mdash; all writeups are published after responsible disclosure is complete
-  </div>
+  <div class="wrap">sk404lab.com &mdash; all writeups published after responsible disclosure is complete</div>
 </footer>
 
 <script>
   const btn = document.getElementById('themeBtn');
   if (localStorage.getItem('theme') === 'light') {
-    document.documentElement.classList.add('light');
+    document.body.classList.add('light');
     btn.textContent = '🌙 dark';
   }
   function toggleTheme() {
-    const isLight = document.documentElement.classList.toggle('light');
+    const isLight = document.body.classList.toggle('light');
     btn.textContent = isLight ? '🌙 dark' : '☀ light';
     localStorage.setItem('theme', isLight ? 'light' : 'dark');
   }
