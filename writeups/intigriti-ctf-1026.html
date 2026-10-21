@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intigriti CTF 1026 - Halloween Candy Store | sk404lab</title>
+<meta name="description" content="How alternating coupon codes exploits a stateless deduplication check in a Node.js/Python hybrid stack to achieve 100% discount on a €666 item.">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #141414;
+    --border: #222;
+    --accent: #ff6b2b;
+    --text: #e0e0e0;
+    --muted: #666;
+    --green: #39d353;
+    --red: #ff4444;
+    --blue: #6b8cff;
+    --code-bg: #1a1a1a;
+    --inline-code: #1e1e1e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Courier New', Courier, monospace;
+    line-height: 1.8;
+    min-height: 100vh;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 0;
+  }
+  .container { max-width: 780px; margin: 0 auto; padding: 0 1.5rem; }
+  .site-title {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+  .site-title span { color: var(--text); }
+  .back-link {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+  }
+  .back-link:hover { color: var(--accent); }
+  article { padding: 3rem 0 4rem; }
+  .post-header { margin-bottom: 2.5rem; }
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 0.68rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-ctf { background: #1a1f35; color: #6b8cff; border: 1px solid #2a3060; }
+  .badge-intigriti { background: #1f1a1a; color: #ff6b2b; border: 1px solid #3a2a1a; }
+  .badge-accepted { background: #1a2a1a; color: var(--green); border: 1px solid #1a3a1a; }
+  .post-date { color: var(--muted); font-size: 0.78rem; }
+  h1 {
+    font-size: 1.65rem;
+    line-height: 1.25;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: #fff;
+  }
+  .post-summary {
+    color: #999;
+    font-size: 0.9rem;
+    border-left: 3px solid var(--accent);
+    padding-left: 1rem;
+    margin-top: 1rem;
+  }
+  h2 {
+    font-size: 1.05rem;
+    color: var(--accent);
+    margin: 2.5rem 0 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+  }
+  h2::before { content: '## '; color: var(--muted); }
+  h3 {
+    font-size: 0.95rem;
+    color: var(--text);
+    margin: 1.75rem 0 0.75rem;
+    font-weight: 700;
+  }
+  h3::before { content: '### '; color: var(--muted); }
+  p { color: #ccc; margin-bottom: 1rem; font-size: 0.9rem; }
+  code {
+    background: var(--inline-code);
+    border: 1px solid #2a2a2a;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    font-size: 0.82rem;
+    color: #f0a060;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.25rem;
+    overflow-x: auto;
+    margin: 1rem 0 1.5rem;
+    position: relative;
+  }
+  pre .label {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.75rem;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #e0e0e0;
+    font-size: 0.82rem;
+    line-height: 1.7;
+  }
+  .comment { color: #555; }
+  .keyword { color: #c792ea; }
+  .string { color: #c3e88d; }
+  .number { color: #f78c6c; }
+  .key { color: var(--blue); }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  li { color: #ccc; font-size: 0.9rem; margin-bottom: 0.3rem; }
+  .info-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--blue);
+    border-radius: 4px;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+    font-size: 0.85rem;
+    color: #aaa;
+  }
+  .warn-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+    font-size: 0.85rem;
+    color: #aaa;
+  }
+  .flag-box {
+    background: #0a1a0a;
+    border: 1px solid #1a3a1a;
+    border-radius: 4px;
+    padding: 1.25rem;
+    margin: 2rem 0;
+    text-align: center;
+  }
+  .flag-label { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 2px; }
+  .flag-value { color: var(--green); font-size: 1rem; font-weight: 700; margin-top: 0.5rem; word-break: break-all; }
+  .flow-diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.25rem;
+    margin: 1.25rem 0;
+    font-size: 0.78rem;
+    color: #999;
+    overflow-x: auto;
+  }
+  .flow-diagram .hi { color: var(--accent); font-weight: bold; }
+  .flow-diagram .ok { color: var(--green); }
+  .flow-diagram .arrow { color: var(--muted); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.82rem;
+  }
+  th {
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 1px;
+  }
+  td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #1a1a1a;
+    color: #ccc;
+  }
+  td:first-child { color: var(--accent); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+  }
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.25rem;
+    margin: 2rem 0;
+    font-size: 0.83rem;
+  }
+  .toc-title { color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 0.75rem; }
+  .toc ol { margin: 0; padding-left: 1.2rem; }
+  .toc li { margin-bottom: 0.2rem; }
+  .toc a { color: #aaa; }
+  .toc a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a href="/" class="site-title">sk404<span>lab</span></a>
+    <a href="/" class="back-link">&larr; back to writeups</a>
+  </div>
+</header>
+
+<article>
+  <div class="container">
+
+    <div class="post-header">
+      <div class="post-meta">
+        <span class="badge badge-ctf">CTF</span>
+        <span class="badge badge-intigriti">Intigriti</span>
+        <span class="badge badge-accepted">Accepted</span>
+        <span class="post-date">Oct 26, 2026</span>
+      </div>
+      <h1>Intigriti CTF 1026 - Halloween Candy Store:<br>Coupon Logic Bypass</h1>
+      <div class="post-summary">
+        How alternating coupon codes exploits a stateless deduplication check to achieve 100% off on a €666 item - no scripts required, browser only.
+      </div>
+    </div>
+
+    <div class="toc">
+      <div class="toc-title">Contents</div>
+      <ol>
+        <li><a href="#setup">Challenge Setup</a></li>
+        <li><a href="#recon">Recon: Reading the Stack</a></li>
+        <li><a href="#discovery">The Discovery</a></li>
+        <li><a href="#root-cause">Root Cause: Stateless Deduplication</a></li>
+        <li><a href="#exploit">The Exploit (Browser Only)</a></li>
+        <li><a href="#bonus">Bonus: HTTP Body-Bleed</a></li>
+        <li><a href="#takeaways">Takeaways</a></li>
+      </ol>
+    </div>
+
+    <h2 id="setup">Challenge Setup</h2>
+
+    <p>
+      Intigriti's October 2026 CTF dropped a Halloween-themed candy store. The goal: buy
+      <strong>The Midnight Collection</strong> (priced at €666.00) using only the €66.00 credit
+      you're given on registration. The flag is in the order receipt.
+    </p>
+
+    <p>
+      The store has two coupon codes available:
+    </p>
+
+    <table>
+      <tr><th>Code</th><th>Discount</th><th>Restriction</th></tr>
+      <tr><td>NIGHT20</td><td>20% off</td><td>One per session</td></tr>
+      <tr><td>NEWS30</td><td>30% off</td><td>First order only (via newsletter)</td></tr>
+    </table>
+
+    <p>
+      Applying both once gives 50% off: €666.00 → €333.00. Still €267 short of your balance.
+      Even with both, you need to stack them <em>more than once</em> — which the UI explicitly blocks.
+    </p>
+
+    <h2 id="recon">Recon: Reading the Stack</h2>
+
+    <p>
+      Opening DevTools and watching network traffic reveals the architecture:
+    </p>
+
+    <div class="flow-diagram">
+      <span class="hi">Browser</span> <span class="arrow">→</span> AWS ALB <span class="arrow">→</span> <span class="hi">istio-envoy</span> <span class="arrow">→</span> <span class="hi">Python BaseHTTPRequestHandler</span> <span class="arrow">→</span> Node.js
+    </div>
+
+    <p>
+      Cart state is managed in-memory by the Node.js layer. The coupon endpoint is:
+    </p>
+
+    <pre><code>POST /api/cart/coupon
+Content-Type: application/json
+
+{"code":"NIGHT20"}</code></pre>
+
+    <p>
+      When you try to apply NIGHT20 a second time, the server returns:
+    </p>
+
+    <pre><code>{"error": "Coupon already applied"}</code></pre>
+
+    <p>
+      The duplication check lives in the Node.js layer and compares the submitted code against
+      the <em>last applied coupon</em> stored in the session — not against the full list of
+      applied coupons.
+    </p>
+
+    <h2 id="discovery">The Discovery</h2>
+
+    <div class="warn-box">
+      This was found by accident during testing, which is often how the best bugs are found.
+    </div>
+
+    <p>
+      While experimenting, the following sequence was tried:
+    </p>
+
+    <ol>
+      <li>Apply <code>NIGHT20</code> → accepted (count: 1)</li>
+      <li>Apply <code>NEWS30</code> → accepted (count: 1)</li>
+      <li>Apply <code>NIGHT20</code> again → <strong>accepted</strong> (count: 2) ???</li>
+      <li>Apply <code>NEWS30</code> again → <strong>accepted</strong> (count: 2) ???</li>
+    </ol>
+
+    <p>
+      At step 3, NIGHT20 was expected to be rejected ("already applied"). It wasn't.
+      The server accepted it because the <em>last applied code</em> was NEWS30, not NIGHT20.
+      The check only asks "is this code the same as the last one?" — not "is this code
+      anywhere in my applied list?"
+    </p>
+
+    <h2 id="root-cause">Root Cause: Stateless Deduplication</h2>
+
+    <p>
+      The deduplication logic effectively does this:
+    </p>
+
+    <pre><code><span class="comment">// Node.js coupon handler (reconstructed from behaviour)</span>
+<span class="keyword">function</span> applyCoupon(session, code) {
+  <span class="keyword">if</span> (session.lastCoupon === code) {
+    <span class="keyword">throw new</span> Error(<span class="string">"Coupon already applied"</span>);
+  }
+  session.lastCoupon = code;
+  session.promotions.push({ code, discount: COUPONS[code] });
+  <span class="comment">// discounts are additive: NIGHT20×2 + NEWS30×2 = 40% + 60% = 100%</span>
+}</code></pre>
+
+    <p>
+      Instead of checking <code>session.promotions.some(p => p.code === code)</code>,
+      it only checks the <em>last entry</em>. Alternating between two codes resets
+      the <code>lastCoupon</code> pointer each time, bypassing the guard entirely.
+    </p>
+
+    <p>The discount model is additive:</p>
+
+    <table>
+      <tr><th>Step</th><th>Code Applied</th><th>Running Discount</th><th>Price</th></tr>
+      <tr><td>1</td><td>NIGHT20 ×1</td><td>20%</td><td>€532.80</td></tr>
+      <tr><td>2</td><td>NEWS30 ×1</td><td>50%</td><td>€333.00</td></tr>
+      <tr><td>3</td><td>NIGHT20 ×2</td><td>70%</td><td>€199.80</td></tr>
+      <tr><td>4</td><td>NEWS30 ×2</td><td>100%</td><td>€0.00</td></tr>
+    </table>
+
+    <p>
+      At €0.00 with €66.00 balance, checkout is unlocked.
+    </p>
+
+    <h2 id="exploit">The Exploit (Browser Only)</h2>
+
+    <p>
+      No scripts needed. In the browser console, grab your session cookie, then apply
+      the coupons in alternating order:
+    </p>
+
+    <ol>
+      <li>Add <strong>The Midnight Collection</strong> to cart</li>
+      <li>Subscribe to newsletter to unlock <code>NEWS30</code></li>
+      <li>Apply <code>NIGHT20</code></li>
+      <li>Apply <code>NEWS30</code></li>
+      <li>Apply <code>NIGHT20</code> again</li>
+      <li>Apply <code>NEWS30</code> again</li>
+      <li>Total is now €0.00 — checkout</li>
+    </ol>
+
+    <div class="flag-box">
+      <div class="flag-label">Flag</div>
+      <div class="flag-value">INTIGRITI{094638e6-ba2f-4c50-8bb4-41ced0d5debd}</div>
+    </div>
+
+    <h2 id="bonus">Bonus: HTTP Body-Bleed</h2>
+
+    <p>
+      During deeper analysis, a second attack path was found. The Python
+      <code>BaseHTTPRequestHandler</code> layer acts as a reverse proxy to Node.js
+      but <strong>never fully consumes the request body</strong> when the path doesn't
+      match any handler (e.g. <code>POST /api/cart</code> — which doesn't exist).
+    </p>
+
+    <p>
+      If you craft a request where the body of the outer POST is itself a complete
+      HTTP/1.1 request, Python leaves the bytes in the TCP read buffer. The
+      <em>next</em> read on that connection picks them up and parses them as a new
+      request — bypassing the coupon deduplication entirely because it arrives as
+      a fresh, independent request before Node.js updates <code>lastCoupon</code>.
+    </p>
+
+    <pre><code><span class="comment"># Outer request: POST /api/cart (no handler → body NOT consumed by Python)</span>
+POST /api/cart HTTP/1.1
+Host: challenge-1026.challenges.intigriti.io
+Content-Length: [total_length]
+
+<span class="comment"># This IS the body — a complete injected HTTP request</span>
+POST /api/cart/coupon HTTP/1.1
+Host: challenge-1026.challenges.intigriti.io
+Cookie: session=[your_session]
+Content-Type: application/json
+Content-Length: 20
+
+{"code":"NIGHT20"}</code></pre>
+
+    <p>
+      This technique — sometimes called <strong>HTTP Body-Bleed</strong> or request
+      tunnelling — works because the proxy layer and the application layer have
+      inconsistent body-consumption behaviour. The alternating-code method turned out
+      simpler, but the body-bleed path is the more interesting finding architecturally.
+    </p>
+
+    <h2 id="takeaways">Takeaways</h2>
+
+    <ul>
+      <li>Deduplication checks must compare against the <em>full set</em> of applied items, not just the last one</li>
+      <li>Additive discount models need an explicit cap or they become a free money printer</li>
+      <li>Multi-layer proxy stacks (Python → Node.js) can create request-parsing inconsistencies that enable request tunnelling</li>
+      <li>Sometimes the simplest test — "what if I just apply it twice?" — finds what complex tooling misses</li>
+    </ul>
+
+    <hr>
+
+    <p style="color: var(--muted); font-size: 0.82rem;">
+      Submitted to Intigriti and accepted Oct 21, 2026. Published after challenge close (Oct 26).
+      Find me on Intigriti as <strong>sk404</strong>.
+    </p>
+
+  </div>
+</article>
+
+<footer>
+  <div class="container">
+    <a href="/">sk404lab.com</a> &mdash; all writeups published after responsible disclosure is complete
+  </div>
+</footer>
+
+</body>
+</html>

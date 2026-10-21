@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sk404lab - Security Research & CTF Writeups</title>
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #141414;
+    --border: #222;
+    --accent: #ff6b2b;
+    --text: #e0e0e0;
+    --muted: #666;
+    --green: #39d353;
+    --code-bg: #1a1a1a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Courier New', Courier, monospace;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 2rem 0 1.5rem;
+  }
+  .container { max-width: 780px; margin: 0 auto; padding: 0 1.5rem; }
+  .site-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-decoration: none;
+    letter-spacing: -0.5px;
+  }
+  .site-title span { color: var(--text); }
+  .tagline {
+    color: var(--muted);
+    font-size: 0.82rem;
+    margin-top: 0.25rem;
+  }
+  nav { margin-top: 1rem; }
+  nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-right: 1.5rem;
+    transition: color 0.15s;
+  }
+  nav a:hover { color: var(--accent); }
+  main { padding: 3rem 0; }
+  .section-label {
+    color: var(--muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .post-card {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    background: var(--surface);
+    text-decoration: none;
+    display: block;
+    transition: border-color 0.15s;
+  }
+  .post-card:hover { border-color: var(--accent); }
+  .post-card.coming-soon { opacity: 0.6; cursor: default; }
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 0.68rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-ctf { background: #1a1f35; color: #6b8cff; border: 1px solid #2a3060; }
+  .badge-intigriti { background: #1f1a1a; color: #ff6b2b; border: 1px solid #3a2a1a; }
+  .badge-p2 { background: #1a2a1a; color: var(--green); border: 1px solid #1a3a1a; }
+  .badge-soon { background: #1a1a1a; color: var(--muted); border: 1px solid #333; }
+  .post-date { color: var(--muted); font-size: 0.78rem; }
+  .post-title {
+    color: var(--text);
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+    line-height: 1.3;
+  }
+  .post-summary { color: #999; font-size: 0.85rem; }
+  .post-tags { margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .tag {
+    font-size: 0.72rem;
+    color: var(--muted);
+    background: #181818;
+    border: 1px solid #2a2a2a;
+    padding: 0.1rem 0.45rem;
+    border-radius: 3px;
+  }
+  .about-box {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    background: var(--surface);
+    margin-bottom: 3rem;
+  }
+  .about-box p { color: #999; font-size: 0.85rem; }
+  .about-box a { color: var(--accent); text-decoration: none; }
+  .about-box a:hover { text-decoration: underline; }
+  .handles { display: flex; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap; }
+  .handle {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .handle span { color: var(--text); }
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 1em;
+    background: var(--accent);
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a href="/" class="site-title">sk404<span>lab</span><span class="cursor"></span></a>
+    <div class="tagline">// security research &middot; bug bounty &middot; ctf writeups</div>
+    <nav>
+      <a href="/">home</a>
+      <a href="#writeups">writeups</a>
+      <a href="https://www.intigriti.com/profile/sk404" target="_blank" rel="noopener">intigriti</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+
+    <div class="about-box">
+      <p>Security researcher focused on web application vulnerabilities, API security, and logic flaws. Active on bug bounty platforms hunting for real impact.</p>
+      <div class="handles">
+        <div class="handle">Intigriti: <span>sk404</span></div>
+      </div>
+    </div>
+
+    <div class="section-label">writeups</div>
+
+    <a href="writeups/intigriti-ctf-1026.html" class="post-card">
+      <div class="post-meta">
+        <span class="badge badge-ctf">CTF</span>
+        <span class="badge badge-intigriti">Intigriti</span>
+        <span class="badge badge-p2">Accepted</span>
+        <span class="post-date">Oct 26, 2026</span>
+      </div>
+      <div class="post-title">Intigriti CTF 1026 - Halloween Candy Store: Coupon Logic Bypass</div>
+      <div class="post-summary">How alternating coupon codes exploits a stateless deduplication check to stack unlimited discounts and get 100% off a €666 item with €66 credit.</div>
+      <div class="post-tags">
+        <span class="tag">business-logic</span>
+        <span class="tag">coupon-bypass</span>
+        <span class="tag">http-body-bleed</span>
+        <span class="tag">halloween</span>
+      </div>
+    </a>
+
+  </div>
+</main>
+
+<footer>
+  <div class="container">
+    sk404lab.com &mdash; all writeups are published after responsible disclosure is complete
+  </div>
+</footer>
+
+</body>
+</html>
