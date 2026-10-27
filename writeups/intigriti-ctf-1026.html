@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intigriti CTF 1026 - Halloween Candy Store | sk404lab</title>
+<meta name="description" content="How alternating coupon codes exploits a stateless deduplication check in a Node.js/Python hybrid stack to achieve 100% discount on a €666 item.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  /* tokens - same as index.html */
+  :root {
+    --bg:   #f5f7fc;
+    --sf:   #ffffff;
+    --bd:   #dde3ef;
+    --rule: #eef1f8;
+    --t1:   #0f172a;
+    --t2:   #4b5675;
+    --t3:   #94a3b8;
+    --ac:   #2563eb;
+    --num:  #ea580c;
+
+    --ctf-bg:#eff5ff; --ctf-fg:#1d4ed8;
+    --bb-bg: #fff7ed; --bb-fg: #c2410c;
+    --ok-bg: #f0fdf4; --ok-fg: #15803d;
+
+    --cb:   #f0f4f9;
+    --cbd:  #d5dbe8;
+    --cstr: #15803d;
+    --ckw:  #6d28d9;
+    --ccmt: #94a3b8;
+    --cnum: #c2410c;
+    --ckey: #1d4ed8;
+
+    --sans: 'IBM Plex Sans', system-ui, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:   #0c101b; --sf:   #111827; --bd:   #1e2b42; --rule: #0f1520;
+      --t1:   #dde6f5; --t2:   #7d8fad; --t3:   #374763;
+      --ac:   #60a5fa; --num:  #f97316;
+      --ctf-bg:#0d1e40; --ctf-fg:#93c5fd;
+      --bb-bg: #1c0f04; --bb-fg: #fb923c;
+      --ok-bg: #052e16; --ok-fg: #4ade80;
+      --cb: #0d1625; --cbd: #1e2b42;
+      --cstr:#4ade80; --ckw:#c084fc; --ccmt:#374763; --cnum:#fb923c; --ckey:#60a5fa;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:   #0c101b; --sf:   #111827; --bd:   #1e2b42; --rule: #0f1520;
+    --t1:   #dde6f5; --t2:   #7d8fad; --t3:   #374763;
+    --ac:   #60a5fa; --num:  #f97316;
+    --ctf-bg:#0d1e40; --ctf-fg:#93c5fd;
+    --bb-bg: #1c0f04; --bb-fg: #fb923c;
+    --ok-bg: #052e16; --ok-fg: #4ade80;
+    --cb: #0d1625; --cbd: #1e2b42;
+    --cstr:#4ade80; --ckw:#c084fc; --ccmt:#374763; --cnum:#fb923c; --ckey:#60a5fa;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--t1);
+    font-family: var(--sans); font-size: 16px;
+    line-height: 1.65; -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--ac); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button { font-family: inherit; cursor: pointer; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 28px; }
+
+  /* header - identical to index.html */
+  header { padding: 52px 0 32px; border-bottom: 1px solid var(--bd); }
+  .logo {
+    display: inline-flex; align-items: baseline;
+    font-family: var(--mono); font-size: clamp(2.4rem, 6vw, 3.2rem);
+    font-weight: 500; letter-spacing: -0.04em; line-height: 1;
+    margin-bottom: 14px; color: inherit; text-decoration: none;
+  }
+  .logo:hover { text-decoration: none; }
+  .logo .pre { color: var(--t2); }
+  .logo .num { color: var(--num); }
+  .logo .suf { color: var(--t1); }
+  .logo .cur { color: var(--num); animation: blink 1.1s step-end infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  @media (prefers-reduced-motion: reduce) { .logo .cur { animation: none; } }
+
+  .hrow { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .back { font-size: 0.875rem; color: var(--t2); transition: color .12s; }
+  .back:hover { color: var(--t1); text-decoration: none; }
+  .tbtn {
+    margin-left: auto; background: none;
+    border: 1px solid var(--bd); color: var(--t3);
+    font-family: var(--mono); font-size: 0.7rem;
+    padding: 3px 10px; border-radius: 4px;
+    transition: border-color .12s, color .12s;
+  }
+  .tbtn:hover { border-color: var(--ac); color: var(--ac); }
+
+  /* article */
+  article { padding: 40px 0 64px; }
+
+  .post-hd { margin-bottom: 32px; padding-bottom: 28px; border-bottom: 1px solid var(--bd); }
+  .pmeta { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .badge { font-size:.68rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; padding:2px 7px; border-radius:3px; }
+  .b-ctf { background:var(--ctf-bg); color:var(--ctf-fg); }
+  .b-bb  { background:var(--bb-bg);  color:var(--bb-fg); }
+  .b-ok  { background:var(--ok-bg);  color:var(--ok-fg); }
+  .pdate { font-family:var(--mono); font-size:.72rem; color:var(--t3); }
+
+  h1 { font-size:1.65rem; font-weight:600; line-height:1.25; color:var(--t1); margin-bottom:14px; text-wrap:balance; }
+  .summary { font-size:1rem; color:var(--t2); border-left:2px solid var(--ac); padding-left:16px; line-height:1.6; }
+
+  .toc { background:var(--sf); border:1px solid var(--bd); border-radius:4px; padding:18px 20px; margin:0 0 32px; }
+  .toc-lbl { font-family:var(--mono); font-size:.68rem; text-transform:uppercase; letter-spacing:.14em; color:var(--t3); margin-bottom:10px; }
+  .toc ol { padding-left:18px; }
+  .toc li { font-size:.875rem; color:var(--t2); margin-bottom:4px; }
+  .toc a { color:var(--t2); }
+  .toc a:hover { color:var(--ac); text-decoration:none; }
+
+  h2 { font-size:1.1rem; font-weight:600; color:var(--t1); margin:36px 0 12px; padding-bottom:8px; border-bottom:1px solid var(--rule); }
+  h3 { font-size:1rem; font-weight:600; color:var(--t1); margin:24px 0 8px; }
+  p { color:var(--t2); font-size:.9375rem; margin-bottom:14px; line-height:1.7; }
+  strong { color:var(--t1); }
+
+  code { font-family:var(--mono); background:var(--cb); border:1px solid var(--cbd); padding:1px 5px; border-radius:3px; font-size:.825rem; color:var(--num); }
+  pre { background:var(--cb); border:1px solid var(--cbd); border-radius:4px; padding:16px 18px; overflow-x:auto; margin:12px 0 20px; position:relative; }
+  pre .lbl { position:absolute; top:8px; right:12px; font-family:var(--mono); font-size:.62rem; text-transform:uppercase; letter-spacing:.1em; color:var(--t3); }
+  pre code { background:none; border:none; padding:0; color:var(--t1); font-size:.825rem; line-height:1.7; }
+
+  .comment { color:var(--ccmt); }
+  .keyword { color:var(--ckw); }
+  .string  { color:var(--cstr); }
+  .number  { color:var(--cnum); }
+  .key     { color:var(--ckey); }
+
+  ul, ol { padding-left:22px; margin-bottom:14px; }
+  li { color:var(--t2); font-size:.9375rem; margin-bottom:5px; line-height:1.6; }
+
+  .info-box { background:var(--sf); border:1px solid var(--bd); border-left:3px solid var(--ac); border-radius:4px; padding:12px 16px; margin:16px 0; font-size:.875rem; color:var(--t2); line-height:1.6; }
+  .warn-box { background:var(--sf); border:1px solid var(--bd); border-left:3px solid var(--num); border-radius:4px; padding:12px 16px; margin:16px 0; font-size:.875rem; color:var(--t2); line-height:1.6; }
+
+  .flag-box { background:var(--ok-bg); border:1px solid var(--ok-fg); border-radius:4px; padding:20px; margin:24px 0; text-align:center; }
+  .flag-lbl { font-family:var(--mono); font-size:.68rem; text-transform:uppercase; letter-spacing:.14em; color:var(--ok-fg); margin-bottom:8px; }
+  .flag-val { font-family:var(--mono); font-size:1rem; font-weight:500; color:var(--ok-fg); word-break:break-all; }
+
+  .flow { background:var(--cb); border:1px solid var(--cbd); border-radius:4px; padding:14px 18px; margin:12px 0 20px; font-family:var(--mono); font-size:.8rem; color:var(--t2); overflow-x:auto; white-space:nowrap; }
+  .flow .hi  { color:var(--t1); font-weight:500; }
+  .flow .arr { color:var(--t3); }
+
+  .tw { overflow-x:auto; margin:12px 0 20px; }
+  table { width:100%; border-collapse:collapse; font-size:.875rem; }
+  th { border-bottom:1px solid var(--bd); padding:7px 12px; text-align:left; color:var(--t3); font-family:var(--mono); font-size:.68rem; text-transform:uppercase; letter-spacing:.1em; font-weight:400; }
+  td { padding:8px 12px; border-bottom:1px solid var(--rule); color:var(--t2); font-variant-numeric:tabular-nums; }
+  td:first-child { font-family:var(--mono); font-size:.825rem; color:var(--ac); }
+  tr:last-child td { border-bottom:none; }
+
+  .vid-wrap { position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:4px; margin:20px 0; }
+  .vid-wrap iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:0; }
+
+  hr { border:none; border-top:1px solid var(--bd); margin:32px 0; }
+  .pfooter { font-size:.875rem; color:var(--t3); }
+  .pfooter strong { color:var(--t2); }
+
+  footer { padding:20px 0; border-top:1px solid var(--bd); }
+  footer span { font-family:var(--mono); font-size:.72rem; color:var(--t3); }
+  footer a { color:var(--t3); }
+  footer a:hover { color:var(--ac); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a href="/" class="logo">
+      <span class="pre">sk</span><span class="num">404</span><span class="suf">lab</span><span class="cur">_</span>
+    </a>
+    <div class="hrow">
+      <a href="/" class="back">&larr; writeups</a>
+      <button class="tbtn" id="tbtn" onclick="toggleTheme()">light</button>
+    </div>
+  </div>
+</header>
+
+<article>
+  <div class="wrap">
+
+    <div class="post-hd">
+      <div class="pmeta">
+        <span class="badge b-ctf">CTF</span>
+        <span class="badge b-bb">Intigriti</span>
+        <span class="badge b-ok">Accepted</span>
+        <span class="pdate">Oct 26, 2026</span>
+      </div>
+      <h1>Intigriti CTF 1026 - Halloween Candy Store:<br>Coupon Logic Bypass</h1>
+      <div class="summary">
+        How alternating coupon codes exploits a stateless deduplication check to achieve 100% off on a &euro;666 item - no scripts required, browser only.
+      </div>
+    </div>
+
+    <div class="toc">
+      <div class="toc-lbl">Contents</div>
+      <ol>
+        <li><a href="#setup">Challenge Setup</a></li>
+        <li><a href="#recon">Recon: Reading the Stack</a></li>
+        <li><a href="#discovery">The Discovery</a></li>
+        <li><a href="#root-cause">Root Cause: Stateless Deduplication</a></li>
+        <li><a href="#exploit">The Exploit (Browser Only)</a></li>
+        <li><a href="#bonus">Bonus: HTTP Body-Bleed</a></li>
+        <li><a href="#takeaways">Takeaways</a></li>
+      </ol>
+    </div>
+
+    <h2 id="setup">Challenge Setup</h2>
+
+    <p>
+      Intigriti's October 2026 CTF dropped a Halloween-themed candy store (<a href="https://challenge-1026.challenges.intigriti.io/" target="_blank" rel="noopener">challenge-1026.challenges.intigriti.io</a>). The goal: buy
+      <strong>The Midnight Collection</strong> (priced at &euro;666.00) using only the &euro;66.00 credit
+      given on registration. The flag is in the order receipt.
+    </p>
+    <p>The store has two coupon codes:</p>
+
+    <div class="tw"><table>
+      <tr><th>Code</th><th>Discount</th><th>Restriction</th></tr>
+      <tr><td>NIGHT20</td><td>20% off</td><td>One per session</td></tr>
+      <tr><td>NEWS30</td><td>30% off</td><td>First order only (via newsletter)</td></tr>
+    </table></div>
+
+    <p>
+      Applying both once gives 50% off: &euro;666.00 &rarr; &euro;333.00. Still &euro;267 short.
+      Even with both, you need to stack them <em>more than once</em> - which the UI explicitly blocks.
+    </p>
+
+    <h2 id="recon">Recon: Reading the Stack</h2>
+
+    <p>Opening DevTools and watching network traffic reveals the architecture:</p>
+
+    <div class="flow">
+      <span class="hi">Browser</span> <span class="arr">&rarr;</span> AWS ALB <span class="arr">&rarr;</span> <span class="hi">istio-envoy</span> <span class="arr">&rarr;</span> <span class="hi">Python BaseHTTPRequestHandler</span> <span class="arr">&rarr;</span> Node.js
+    </div>
+
+    <p>Cart state is managed in-memory by the Node.js layer. The coupon endpoint:</p>
+
+    <pre><code>POST /api/cart/coupon
+Content-Type: application/json
+
+{"code":"NIGHT20"}</code></pre>
+
+    <p>When you try to apply NIGHT20 a second time:</p>
+
+    <pre><code>{"error": "Coupon already applied"}</code></pre>
+
+    <p>
+      The duplication check lives in the Node.js layer and compares the submitted code against the
+      <em>last applied coupon</em> in the session - not the full list of applied coupons.
+    </p>
+
+    <h2 id="discovery">The Discovery</h2>
+
+    <div class="warn-box">
+      This was found by accident during testing, which is often how the best bugs are found.
+    </div>
+
+    <p>While experimenting, the following sequence was tried:</p>
+
+    <ol>
+      <li>Apply <code>NIGHT20</code> &rarr; accepted (count: 1)</li>
+      <li>Apply <code>NEWS30</code> &rarr; accepted (count: 1)</li>
+      <li>Apply <code>NIGHT20</code> again &rarr; <strong>accepted</strong> (count: 2) ???</li>
+      <li>Apply <code>NEWS30</code> again &rarr; <strong>accepted</strong> (count: 2) ???</li>
+    </ol>
+
+    <p>
+      At step 3, NIGHT20 was expected to be rejected. It wasn't. The server accepted it because
+      the <em>last applied code</em> was NEWS30. The check only asks "is this code the same as
+      the last one?" - not "is this code anywhere in my applied list?"
+    </p>
+
+    <h2 id="root-cause">Root Cause: Stateless Deduplication</h2>
+
+    <p>The deduplication logic effectively does this:</p>
+
+    <pre><code><span class="comment">// Node.js coupon handler (reconstructed from behaviour)</span>
+<span class="keyword">function</span> applyCoupon(session, code) {
+  <span class="keyword">if</span> (session.lastCoupon === code) {
+    <span class="keyword">throw new</span> Error(<span class="string">"Coupon already applied"</span>);
+  }
+  session.lastCoupon = code;
+  session.promotions.push({ code, discount: COUPONS[code] });
+  <span class="comment">// discounts are additive: NIGHT20×2 + NEWS30×2 = 40% + 60% = 100%</span>
+}</code></pre>
+
+    <p>
+      Instead of <code>session.promotions.some(p => p.code === code)</code>,
+      it only checks the <em>last entry</em>. Alternating between two codes resets the
+      <code>lastCoupon</code> pointer each time, bypassing the guard entirely.
+    </p>
+
+    <p>The discount model is additive:</p>
+
+    <div class="tw"><table>
+      <tr><th>Step</th><th>Code Applied</th><th>Running Discount</th><th>Price</th></tr>
+      <tr><td>1</td><td>NIGHT20 &times;1</td><td>20%</td><td>&euro;532.80</td></tr>
+      <tr><td>2</td><td>NEWS30 &times;1</td><td>50%</td><td>&euro;333.00</td></tr>
+      <tr><td>3</td><td>NIGHT20 &times;2</td><td>70%</td><td>&euro;199.80</td></tr>
+      <tr><td>4</td><td>NEWS30 &times;2</td><td>100%</td><td>&euro;0.00</td></tr>
+    </table></div>
+
+    <p>At &euro;0.00 with &euro;66.00 balance, checkout is unlocked.</p>
+
+    <h2 id="exploit">The Exploit (Browser Only)</h2>
+
+    <p>No scripts needed. Apply the coupons in alternating order:</p>
+
+    <ol>
+      <li>Add <strong>The Midnight Collection</strong> to cart</li>
+      <li>Subscribe to newsletter to unlock <code>NEWS30</code></li>
+      <li>Apply <code>NIGHT20</code></li>
+      <li>Apply <code>NEWS30</code></li>
+      <li>Apply <code>NIGHT20</code> again</li>
+      <li>Apply <code>NEWS30</code> again</li>
+      <li>Total is now &euro;0.00 - checkout</li>
+    </ol>
+
+    <div class="vid-wrap">
+      <iframe src="https://www.youtube.com/embed/HMtTqorVVeI" title="Intigriti CTF 1026 - Coupon Logic Bypass PoC" frameborder="0" allowfullscreen loading="lazy"></iframe>
+    </div>
+
+    <div class="flag-box">
+      <div class="flag-lbl">Flag</div>
+      <div class="flag-val">INTIGRITI{094638e6-ba2f-4c50-8bb4-41ced0d5debd}</div>
+    </div>
+
+    <h2 id="bonus">Bonus: HTTP Body-Bleed</h2>
+
+    <p>
+      During deeper analysis, a second attack path was found. The Python
+      <code>BaseHTTPRequestHandler</code> layer acts as a reverse proxy to Node.js
+      but <strong>never fully consumes the request body</strong> when the path doesn't
+      match any handler (e.g. <code>POST /api/cart</code>).
+    </p>
+    <p>
+      If you craft a request where the body of the outer POST is itself a complete
+      HTTP/1.1 request, Python leaves the bytes in the TCP read buffer. The
+      <em>next</em> read on that connection picks them up and parses them as a new
+      request - bypassing the coupon deduplication entirely because it arrives as
+      a fresh, independent request before Node.js updates <code>lastCoupon</code>.
+    </p>
+
+    <pre><code><span class="comment"># Outer request: POST /api/cart (no handler → body NOT consumed by Python)</span>
+POST /api/cart HTTP/1.1
+Host: challenge-1026.challenges.intigriti.io
+Content-Length: [total_length]
+
+<span class="comment"># This IS the body - a complete injected HTTP request</span>
+POST /api/cart/coupon HTTP/1.1
+Host: challenge-1026.challenges.intigriti.io
+Cookie: session=[your_session]
+Content-Type: application/json
+Content-Length: 20
+
+{"code":"NIGHT20"}</code></pre>
+
+    <p>
+      This technique - sometimes called <strong>HTTP Body-Bleed</strong> or request tunnelling -
+      works because the proxy and application layers have inconsistent body-consumption behaviour.
+      The alternating-code method turned out simpler, but the body-bleed path is the more interesting
+      finding architecturally.
+    </p>
+
+    <h2 id="takeaways">Takeaways</h2>
+
+    <ul>
+      <li>Deduplication checks must compare against the <em>full set</em> of applied items, not just the last one</li>
+      <li>Additive discount models need an explicit cap or they become a free money printer</li>
+      <li>Multi-layer proxy stacks (Python &rarr; Node.js) can create request-parsing inconsistencies that enable request tunnelling</li>
+      <li>Sometimes the simplest test - "what if I just apply it twice?" - finds what complex tooling misses</li>
+    </ul>
+
+    <hr>
+
+    <p class="pfooter">
+      Submitted to Intigriti and accepted Oct 21, 2026. Published after challenge close (Oct 26).
+      Find me on Intigriti as <strong>sk404</strong>.
+    </p>
+
+  </div>
+</article>
+
+<footer>
+  <div class="wrap">
+    <span><a href="/">sk404lab</a> - writeups published after responsible disclosure is complete</span>
+  </div>
+</footer>
+
+<script>
+const html = document.documentElement;
+const btn = document.getElementById('tbtn');
+const saved = localStorage.getItem('sk404-theme');
+if (saved) {
+  html.setAttribute('data-theme', saved);
+  btn.textContent = saved === 'dark' ? 'light' : 'dark';
+} else {
+  btn.textContent = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'light' : 'dark';
+}
+function toggleTheme() {
+  const isDark = html.getAttribute('data-theme') === 'dark'
+    || (!html.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const next = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('sk404-theme', next);
+  btn.textContent = next === 'dark' ? 'light' : 'dark';
+}
+</script>
+</body>
+</html>
