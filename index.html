@@ -22,6 +22,7 @@
     --ctf-bg:#eff5ff; --ctf-fg:#1d4ed8;
     --bb-bg: #fff7ed; --bb-fg: #c2410c;
     --ok-bg: #f0fdf4; --ok-fg: #15803d;
+    --pend-bg:#fefce8; --pend-fg:#a16207;
 
     --sans: 'IBM Plex Sans', system-ui, sans-serif;
     --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
@@ -41,6 +42,7 @@
       --ctf-bg:#0d1e40; --ctf-fg:#93c5fd;
       --bb-bg: #1c0f04; --bb-fg: #fb923c;
       --ok-bg: #052e16; --ok-fg: #4ade80;
+      --pend-bg:#1c1a04; --pend-fg:#fbbf24;
     }
   }
   :root[data-theme="dark"] {
@@ -57,6 +59,7 @@
     --ctf-bg:#0d1e40; --ctf-fg:#93c5fd;
     --bb-bg: #1c0f04; --bb-fg: #fb923c;
     --ok-bg: #052e16; --ok-fg: #4ade80;
+    --pend-bg:#1c1a04; --pend-fg:#fbbf24;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -158,9 +161,10 @@
     padding: 2px 7px;
     border-radius: 3px;
   }
-  .b-ctf { background: var(--ctf-bg); color: var(--ctf-fg); }
-  .b-bb  { background: var(--bb-bg);  color: var(--bb-fg); }
-  .b-ok  { background: var(--ok-bg);  color: var(--ok-fg); }
+  .b-ctf  { background: var(--ctf-bg);  color: var(--ctf-fg); }
+  .b-bb   { background: var(--bb-bg);   color: var(--bb-fg); }
+  .b-ok   { background: var(--ok-bg);   color: var(--ok-fg); }
+  .b-pend { background: var(--pend-bg); color: var(--pend-fg); }
 
   .pdate { font-family: var(--mono); font-size: 0.72rem; color: var(--t3); margin-left: auto; }
   .ptitle {
@@ -222,14 +226,32 @@
     <div id="writeups">
       <p class="slabel">writeups</p>
 
+      <a href="writeups/intigriti-ctf-1126.html" class="post">
+        <div class="pmeta">
+          <span class="badge b-ctf">CTF</span>
+          <span class="badge b-bb">Intigriti</span>
+          <span class="badge b-pend">Submitted</span>
+          <span class="pdate">Nov 2026</span>
+        </div>
+        <div class="ptitle">Intigriti CTF 1126 — Signing the Wrong Data: RSA Bypass via Double DATA Frame</div>
+        <div class="pdesc">Custom binary protocol over HTTPS with RSA-signed Brainf*ck programs. Bypassed RSA-2048 by injecting a second DATA frame that lands outside the SHA256 hash window but overwrites the BF instruction pointer — giving full control over what runs.</div>
+        <div class="tags">
+          <span class="tag">binary-analysis</span>
+          <span class="tag">rsa-bypass</span>
+          <span class="tag">brainfuck</span>
+          <span class="tag">protocol-analysis</span>
+          <span class="tag">x86-64</span>
+        </div>
+      </a>
+
       <a href="writeups/intigriti-ctf-1026.html" class="post">
         <div class="pmeta">
           <span class="badge b-ctf">CTF</span>
           <span class="badge b-bb">Intigriti</span>
           <span class="badge b-ok">Accepted</span>
-          <span class="pdate">Oct 26, 2026</span>
+          <span class="pdate">Oct 2026</span>
         </div>
-        <div class="ptitle">Intigriti CTF 1026 - Halloween Candy Store: Coupon Logic Bypass</div>
+        <div class="ptitle">Intigriti CTF 1026 — Halloween Candy Store: Coupon Logic Bypass</div>
         <div class="pdesc">How alternating coupon codes exploits a stateless deduplication check to stack unlimited discounts and get 100% off a &euro;666 item with &euro;66 credit.</div>
         <div class="tags">
           <span class="tag">business-logic</span>
